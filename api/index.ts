@@ -8,7 +8,7 @@ export const config = {
   runtime: 'edge'
 }
 
-const app = new Hono<{ Bindings: Bindings }>().basePath('/api')
+const app = new Hono().basePath('/api')
 
 app.get('/', (c) => {
     return c.json({ message: 'Hello Hono!' })
