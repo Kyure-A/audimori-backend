@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { handle } from 'hono/vercel'
+import { env } from 'hono/adapter'
 import OpenAI from 'openai'
-import { Bindings } from './types'
 import { prompt } from './prompt'
 
 export const config = {
@@ -18,7 +18,7 @@ app.post('/', async (c) => {
     const text = c.req.query("text") as string;
     
     const openai = new OpenAI({
-        apiKey: c.env.OPENAI_API_KEY
+        apiKey: env<{ OPENAI_API_KEY: string }>(c).OPENAI_API_KEY
     })
     
     try {
