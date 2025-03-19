@@ -4,7 +4,7 @@ import { env } from 'hono/adapter'
 import OpenAI from 'openai'
 import { MurekaAI } from './mureka';
 
-export const prompt = "The user creates lyrics based on the content of their diary and customizes the form and structure of the lyrics. They wish to include random sections (e.g., [Drop]) and prefer no numbering in the progression of the song. In the output format, no explanations other than the lyrics are required, and random sections specified may appear during the progression of the song. The lyrics are created based on the content of the diary or other information provided by the user."
+export const openaiPrompt = "The user creates lyrics based on the content of their diary and customizes the form and structure of the lyrics. They wish to include random sections (e.g., [Drop]) and prefer no numbering in the progression of the song. In the output format, no explanations other than the lyrics are required, and random sections specified may appear during the progression of the song. The lyrics are created based on the content of the diary or other information provided by the user."
 
 export const config = {
   runtime: 'edge'
@@ -17,7 +17,12 @@ app.get('/', (c) => {
 })
 
 app.post('/', async (c) => {
-    const text = c.req.query("text") as string;
+    const query = {
+        text: c.req.query("text"),
+        prompt: c.req.query("prompt")
+    }
+
+    if (!query.text || !query.prompt) return c.json({ success: false, value: null, error: "query is null" }, 500);
     
     const openai = new OpenAI({
         apiKey: env<{ OPENAI_API_KEY: string }>(c).OPENAI_API_KEY
@@ -31,8 +36,8 @@ app.post('/', async (c) => {
         const lyrics = env<{ PRODUCTION: string }>(c).PRODUCTION === "true" ? (await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
-                { role: "system", content: prompt },
-                { role: "user", content: text }
+                { role: "system", content: openaiPrompt },
+                { role: "user", content: query.text }
             ]
         })).choices[0].message.content : "こんにちは";
         
@@ -42,7 +47,7 @@ app.post('/', async (c) => {
 
         console.log("------------ generate music ------------")
         
-        const musics = mureka.generateMusic(lyrics, prompt)
+        const musics = await mureka.generateMusic(lyrics, query.prompt)
         
         console.log(JSON.stringify(musics));
         

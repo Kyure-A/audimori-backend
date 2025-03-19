@@ -41,6 +41,8 @@ export class MurekaAI {
 
     async generateMusic(lyrics: string, prompt: string): Promise<MurekaAIResponse[]> {
         try {
+            console.log(`request to ${MUREKA_BASE_URL}/music/create-advanced`)
+            
             const response = await fetch(`${MUREKA_BASE_URL}/music/create-advanced`, {
                 method: "POST",
                 headers: {
@@ -54,21 +56,28 @@ export class MurekaAI {
                 redirect: "follow"
             })
 
-            if (!response.ok) return Promise.reject(new Error(JSON.stringify(response)));
+            // if (!response.ok) {
+            //     console.error("response is not ok")
+            //     return Promise.reject(new Error(JSON.stringify(response)));
+            // }
 
-            const musics: MurekaAIResponse[] = (await response.json() as MurekaApiResponse).songs.map(song => {
+            const rawMusics = (await response.json()) as MurekaApiResponse
+
+            console.log(rawMusics)
+            
+            const musics = rawMusics.songs.map(song => {
                 return {
                     name: song.title,
                     musicUrl: song.mp3_url,
                     coverImageUrl: song.cover,
                     lyrics: lyrics,
                     prompt: prompt
-                } satisfies MurekaAIResponse
+                };
             })
-
+            
             return musics            
         } catch (e) {
-            console.error(e);
+            console.error(`catched error; ${e}`);
             return Promise.reject(new Error(JSON.stringify(e)));
         }
     }
